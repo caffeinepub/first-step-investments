@@ -23,7 +23,7 @@
     --card-foreground: 0.14 0.04 265;
     --popover: 1 0 0;
     --popover-foreground: 0.14 0.04 265;
-    --primary: 0.17 0.06 232;
+    --primary: 0.45 0.12 232;
     --primary-foreground: 1 0 0;
     --secondary: 0.97 0.01 175;
     --secondary-foreground: 0.17 0.06 232;
@@ -68,8 +68,8 @@
   .roadmap-line {
     background: linear-gradient(
       to bottom,
-      oklch(0.75 0.13 172),
-      oklch(0.75 0.13 172 / 0.1)
+      oklch(0.82 0.1 210),
+      oklch(0.82 0.1 210 / 0.1)
     );
   }
 }

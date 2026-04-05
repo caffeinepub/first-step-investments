@@ -5,24 +5,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Slider } from "@/components/ui/slider";
 import { Toaster } from "@/components/ui/sonner";
 import {
   AlertTriangle,
   ArrowRight,
   BarChart2,
   BookOpen,
-  Bot,
-  ChevronDown,
   ChevronRight,
-  ChevronUp,
   Instagram,
   Lightbulb,
   Linkedin,
   Menu,
-  Send,
   Sparkles,
   Star,
   Target,
@@ -33,6 +29,7 @@ import {
 import { AnimatePresence, motion, useInView } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { DonutChart } from "./components/DonutChart";
 import { LoginPage } from "./components/LoginPage";
 import { MiniLineChart } from "./components/MiniLineChart";
 import {
@@ -48,6 +45,14 @@ const NAVY = "oklch(0.45 0.12 232)";
 const NAVY_MID = "oklch(0.52 0.11 232)";
 const MINT = "oklch(0.82 0.10 210)";
 const MINT_LIGHT = "oklch(0.92 0.06 210)";
+
+const PORTFOLIO_SEGMENTS = [
+  { label: "Stocks", value: 40, color: "#3CC6A6" },
+  { label: "ETFs", value: 25, color: "#A8E6C8" },
+  { label: "Crypto", value: 15, color: "#5BB8F5" },
+  { label: "Bonds", value: 12, color: "#F5A623" },
+  { label: "Cash", value: 8, color: "#E0E7EE" },
+];
 
 const TREND_HISTORY: Record<string, number[]> = {
   sp500: [5100, 5180, 5150, 5200, 5220, 5231],
@@ -243,6 +248,19 @@ function SIPCalculator() {
   const [years, setYears] = useState(10);
   const [rate, setRate] = useState(12);
 
+  const r = rate / 100;
+  const n = years;
+  const P = monthly;
+  const monthlyRate = r / 12;
+  const months = n * 12;
+  const fv =
+    P * (((1 + monthlyRate) ** months - 1) / monthlyRate) * (1 + monthlyRate);
+  const totalInvested = P * months;
+  const estimatedReturns = fv - totalInvested;
+
+  const fmt = (v: number) =>
+    `₹${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(v)}`;
+
   return (
     <div className="bg-white rounded-3xl border border-border shadow-card p-6 md:p-8">
       <div className="flex items-center gap-3 mb-6">
@@ -262,69 +280,132 @@ function SIPCalculator() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Controls */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 content-start">
+        <div className="space-y-6">
           <div>
-            <label
-              htmlFor="sip-monthly"
-              className="block text-sm font-semibold text-foreground mb-2"
-            >
-              Monthly Investment (₹)
-            </label>
-            <input
-              id="sip-monthly"
-              type="number"
+            <div className="flex justify-between mb-2">
+              <span className="text-sm font-semibold text-foreground">
+                Monthly Investment
+              </span>
+              <span className="text-sm font-bold" style={{ color: MINT }}>
+                ₹{monthly.toLocaleString("en-IN")}
+              </span>
+            </div>
+            <Slider
               min={500}
+              max={50000}
               step={500}
-              value={monthly}
-              onChange={(e) =>
-                setMonthly(Math.max(500, Number(e.target.value) || 500))
-              }
+              value={[monthly]}
+              onValueChange={(v) => setMonthly(v[0])}
               data-ocid="sip.monthly.input"
-              className="w-full border border-border rounded-xl px-4 py-3 text-foreground font-semibold text-lg focus:outline-none focus:ring-2"
             />
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>₹500</span>
+              <span>₹50,000</span>
+            </div>
           </div>
+
           <div>
-            <label
-              htmlFor="sip-years"
-              className="block text-sm font-semibold text-foreground mb-2"
-            >
-              Time Period (Years)
-            </label>
-            <input
-              id="sip-years"
-              type="number"
-              min={1}
-              max={40}
-              value={years}
-              onChange={(e) =>
-                setYears(Math.min(40, Math.max(1, Number(e.target.value) || 1)))
-              }
-              data-ocid="sip.years.input"
-              className="w-full border border-border rounded-xl px-4 py-3 text-foreground font-semibold text-lg focus:outline-none focus:ring-2"
-            />
+            <div className="flex justify-between mb-2">
+              <span className="text-sm font-semibold text-foreground">
+                Time Period
+              </span>
+              <span className="text-sm font-bold" style={{ color: MINT }}>
+                {years} years
+              </span>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {[5, 10, 15, 20].map((y) => (
+                <button
+                  key={y}
+                  type="button"
+                  data-ocid={`sip.years.${y}.button`}
+                  onClick={() => setYears(y)}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold transition-all min-w-[48px]"
+                  style={
+                    years === y
+                      ? { backgroundColor: MINT, color: NAVY }
+                      : {
+                          backgroundColor: "oklch(0.95 0.02 210)",
+                          color: "oklch(0.4 0.04 250)",
+                        }
+                  }
+                >
+                  {y}Y
+                </button>
+              ))}
+            </div>
           </div>
+
           <div>
-            <label
-              htmlFor="sip-rate"
-              className="block text-sm font-semibold text-foreground mb-2"
-            >
-              Expected Return (%)
-            </label>
-            <input
-              id="sip-rate"
-              type="number"
-              min={1}
-              max={30}
-              step={0.5}
-              value={rate}
-              onChange={(e) =>
-                setRate(Math.min(30, Math.max(1, Number(e.target.value) || 1)))
-              }
-              data-ocid="sip.rate.input"
-              className="w-full border border-border rounded-xl px-4 py-3 text-foreground font-semibold text-lg focus:outline-none focus:ring-2"
-            />
+            <div className="flex justify-between mb-2">
+              <span className="text-sm font-semibold text-foreground">
+                Expected Return
+              </span>
+              <span className="text-sm font-bold" style={{ color: MINT }}>
+                {rate}% p.a.
+              </span>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {[8, 10, 12, 15].map((rv) => (
+                <button
+                  key={rv}
+                  type="button"
+                  data-ocid={`sip.rate.${rv}.button`}
+                  onClick={() => setRate(rv)}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold transition-all min-w-[48px]"
+                  style={
+                    rate === rv
+                      ? { backgroundColor: MINT, color: NAVY }
+                      : {
+                          backgroundColor: "oklch(0.95 0.02 210)",
+                          color: "oklch(0.4 0.04 250)",
+                        }
+                  }
+                >
+                  {rv}%
+                </button>
+              ))}
+            </div>
           </div>
         </div>
+
+        {/* Results */}
+        <motion.div
+          key={`${monthly}-${years}-${rate}`}
+          initial={{ opacity: 0.6, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="rounded-2xl p-6 flex flex-col justify-center gap-4"
+          style={{ backgroundColor: NAVY }}
+          data-ocid="sip.results.panel"
+        >
+          {[
+            { label: "Total Invested", value: totalInvested, accent: false },
+            {
+              label: "Estimated Returns",
+              value: estimatedReturns,
+              accent: false,
+            },
+            { label: "Final Value", value: fv, accent: true },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className={`${item.accent ? "border-t border-white/10 pt-4" : ""}`}
+            >
+              <p className="text-white/50 text-xs mb-1">{item.label}</p>
+              <p
+                className="font-bold text-2xl"
+                style={{ color: item.accent ? MINT_LIGHT : "white" }}
+              >
+                {fmt(item.value)}
+              </p>
+            </div>
+          ))}
+          <p className="text-white/30 text-xs mt-2">
+            * Estimates are indicative. Actual returns may vary with market
+            conditions.
+          </p>
+        </motion.div>
       </div>
     </div>
   );
@@ -1312,25 +1393,6 @@ export default function App() {
   const [email, setEmail] = useState("");
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [expandedTip, setExpandedTip] = useState<string | null>(null);
-  const [aiChatOpen, setAiChatOpen] = useState(false);
-  const [aiChatInput, setAiChatInput] = useState("");
-  const [aiChatMessages, setAiChatMessages] = useState<
-    { role: "user" | "ai"; text: string }[]
-  >([
-    {
-      role: "ai",
-      text: "👋 Hi! I'm One Call AI, powered by Claude.ai. I'm here to help you with investment questions 24/7. Ask me anything about stocks, mutual funds, SIPs, or getting started in investing!",
-    },
-  ]);
-  const [aiChatTyping, setAiChatTyping] = useState(false);
-  const [expandedTrackerCard, setExpandedTrackerCard] = useState<string | null>(
-    null,
-  );
-  const [expandedHubTip, setExpandedHubTip] = useState<string | null>(null);
-  const [expandedHelpCenter, setExpandedHelpCenter] = useState(false);
-  const [expandedMarketItem, setExpandedMarketItem] = useState<string | null>(
-    null,
-  );
   const openModal = (id: string) => setActiveModal(id);
   const { data: categories = [], isLoading: catsLoading } = useCategories();
   const { data: trends = [], isLoading: trendsLoading } = useMarketTrends();
@@ -1348,6 +1410,8 @@ export default function App() {
     toast.success("You're in! Welcome to First Step 🎉");
     setEmail("");
   };
+
+  const heroChartData = [42, 48, 45, 52, 58, 55, 62, 68, 65, 74];
 
   if (!isLoggedIn) return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
 
@@ -1599,6 +1663,44 @@ export default function App() {
                   alt="Couple reviewing their investment portfolio on a tablet"
                   className="w-full h-72 lg:h-80 object-cover mix-blend-multiply"
                 />
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7, duration: 0.5 }}
+                  className="absolute bottom-4 left-4 right-4 bg-white rounded-2xl p-4 shadow-card"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground font-medium">
+                        Portfolio Value
+                      </p>
+                      <p className="text-xl font-bold text-foreground">
+                        ₹20,31,800
+                      </p>
+                    </div>
+                    <Badge
+                      className="text-xs font-semibold rounded-full"
+                      style={{ backgroundColor: `${MINT}33`, color: NAVY }}
+                    >
+                      +8.4%
+                    </Badge>
+                  </div>
+                  <MiniLineChart
+                    data={heroChartData}
+                    width={260}
+                    height={48}
+                    color="#3CC6A6"
+                    filled
+                    label="Portfolio growth chart"
+                  />
+                  <div className="flex justify-between mt-2">
+                    {["Jan", "Mar", "May", "Jul", "Sep", "Nov"].map((m) => (
+                      <span key={m} className="text-xs text-muted-foreground">
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
               </div>
             </motion.div>
           </div>
@@ -1755,1029 +1857,169 @@ export default function App() {
               </div>
 
               {/* Hub content */}
-              <div className="lg:col-span-9">
-                <AnimatePresence mode="wait">
-                  {/* ─── Guide Tab ─── */}
-                  {activeHub === "guide" && (
-                    <motion.div
-                      key="guide"
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-6"
+              <div className="lg:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Markets card */}
+                <div className="bg-white rounded-2xl border border-border p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h3 className="font-semibold text-foreground">
+                      Live Market Trends
+                    </h3>
+                    <Badge
+                      className="text-xs rounded-full flex items-center gap-1"
+                      style={{ backgroundColor: `${MINT}22`, color: NAVY }}
                     >
-                      {/* Customer Support */}
-                      <div className="bg-white rounded-2xl border border-border p-6">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-bold text-foreground text-lg">
-                            24/7 Customer Support
-                          </h3>
-                          <Badge
-                            className="text-xs rounded-full"
-                            style={{
-                              backgroundColor: `${MINT}22`,
-                              color: NAVY,
-                            }}
-                          >
-                            AI + Real Support
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-                          Get instant answers anytime with our AI-powered
-                          assistant, or speak to a real investment advisor
-                          during business hours (9AM–6PM IST). We're here to
-                          help you every step of the way.
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                          {/* AI Chat Support Card */}
-                          <motion.button
-                            type="button"
-                            data-ocid="guide.ai_chat.button"
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => setAiChatOpen(true)}
-                            className="rounded-xl border border-border p-4 flex flex-col items-center text-center gap-2 cursor-pointer transition-all hover:shadow-md"
-                            style={{ backgroundColor: `${MINT}22` }}
-                          >
-                            <span className="text-2xl">⚡</span>
-                            <p className="font-semibold text-foreground text-sm">
-                              AI Chat Support
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Instant 24/7
-                            </p>
-                            <span
-                              className="text-xs font-medium px-2 py-0.5 rounded-full"
-                              style={{ backgroundColor: NAVY, color: "white" }}
-                            >
-                              Chat Now →
-                            </span>
-                          </motion.button>
-                          {/* Real Advisor Card */}
-                          <motion.a
-                            href="mailto:kumarnivith33@gmail.com?subject=Investment Advice Request"
-                            data-ocid="guide.real_advisor.button"
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            className="rounded-xl border border-border p-4 flex flex-col items-center text-center gap-2 cursor-pointer transition-all hover:shadow-md no-underline"
-                            style={{ backgroundColor: `${MINT}22` }}
-                          >
-                            <span className="text-2xl">🧑‍💼</span>
-                            <p className="font-semibold text-foreground text-sm">
-                              Real Advisor
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              9AM–6PM IST
-                            </p>
-                            <span
-                              className="text-xs font-medium px-2 py-0.5 rounded-full"
-                              style={{ backgroundColor: NAVY, color: "white" }}
-                            >
-                              Email Advisor →
-                            </span>
-                          </motion.a>
-                          {/* Help Center Card */}
-                          <motion.button
-                            type="button"
-                            data-ocid="guide.help_center.button"
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() =>
-                              setExpandedHelpCenter(!expandedHelpCenter)
-                            }
-                            className="rounded-xl border border-border p-4 flex flex-col items-center text-center gap-2 cursor-pointer transition-all hover:shadow-md"
-                            style={{ backgroundColor: `${MINT}22` }}
-                          >
-                            <span className="text-2xl">📚</span>
-                            <p className="font-semibold text-foreground text-sm">
-                              Help Center
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Self-serve guides
-                            </p>
-                            <span
-                              className="text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1"
-                              style={{ backgroundColor: NAVY, color: "white" }}
-                            >
-                              {expandedHelpCenter ? (
-                                <>
-                                  <ChevronUp size={10} /> Close
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronDown size={10} /> Explore
-                                </>
-                              )}
-                            </span>
-                          </motion.button>
-                        </div>
-                        {/* Help Center Expanded Panel */}
-                        <AnimatePresence>
-                          {expandedHelpCenter && (
-                            <motion.div
-                              data-ocid="guide.help_center.panel"
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="overflow-hidden mt-4"
-                            >
-                              <div
-                                className="rounded-xl border border-border p-5 space-y-4"
-                                style={{ backgroundColor: `${MINT}10` }}
-                              >
-                                <h4 className="font-semibold text-foreground text-sm">
-                                  📚 Beginner Investment Guides
-                                </h4>
-                                {[
-                                  {
-                                    title: "What is a Mutual Fund?",
-                                    desc: "A mutual fund pools money from many investors to buy stocks, bonds, or other assets. Professional fund managers manage your money. Ideal for beginners!",
-                                  },
-                                  {
-                                    title: "How does SIP work?",
-                                    desc: "SIP (Systematic Investment Plan) lets you invest a fixed amount monthly. You buy more units when prices are low and fewer when high — called rupee cost averaging.",
-                                  },
-                                  {
-                                    title: "What is the Nifty 50?",
-                                    desc: "Nifty 50 is India's benchmark stock index — it tracks the top 50 companies by market cap on NSE. It represents ~65% of India's total market capitalisation.",
-                                  },
-                                  {
-                                    title: "Difference: FD vs Mutual Fund",
-                                    desc: "Fixed Deposits offer guaranteed returns (5–7%) with zero risk. Mutual Funds offer potentially higher returns (10–15%) but with market risk. Choose based on your risk tolerance.",
-                                  },
-                                  {
-                                    title: "How to open a Demat Account?",
-                                    desc: "Visit Zerodha, Groww, or Upstox. Provide Aadhaar, PAN, and bank account details. Complete video KYC in 15 minutes. Fund your account and start investing!",
-                                  },
-                                ].map((guide) => (
-                                  <div
-                                    key={guide.title}
-                                    className="rounded-lg bg-white border border-border p-3"
-                                  >
-                                    <p className="font-semibold text-sm text-foreground mb-1">
-                                      {guide.title}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground leading-relaxed">
-                                      {guide.desc}
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-
-                      {/* How to Start */}
-                      <div className="bg-white rounded-2xl border border-border p-6">
-                        <h3 className="font-bold text-foreground text-lg mb-5">
-                          How to Start Investing
-                        </h3>
-                        <div className="space-y-4">
-                          {[
-                            {
-                              num: 1,
-                              title: "Open a Demat Account",
-                              desc: "Open an account with a broker like Zerodha, Groww, or Upstox. It takes 15–30 minutes online.",
-                            },
-                            {
-                              num: 2,
-                              title: "Complete KYC",
-                              desc: "Aadhaar + PAN verification is required. It takes just 10–15 minutes and is fully digital.",
-                            },
-                            {
-                              num: 3,
-                              title: "Add Funds",
-                              desc: "Transfer ₹500–₹5,000 to your account to begin. Start small — you can always add more later.",
-                            },
-                            {
-                              num: 4,
-                              title: "Choose Your First Investment",
-                              desc: "We recommend starting with a Nifty 50 index fund or a SIP in a large-cap mutual fund.",
-                            },
-                            {
-                              num: 5,
-                              title: "Track & Grow",
-                              desc: "Review monthly, reinvest returns, and stay consistent. Patience builds real wealth.",
-                            },
-                          ].map((step, i) => (
-                            <motion.div
-                              key={step.num}
-                              initial={{ opacity: 0, x: -12 }}
-                              whileInView={{ opacity: 1, x: 0 }}
-                              viewport={{ once: true }}
-                              transition={{ delay: i * 0.07 }}
-                              className="flex gap-4 items-start"
-                            >
-                              <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-sm flex-shrink-0 mt-0.5"
-                                style={{ backgroundColor: NAVY }}
-                              >
-                                {step.num}
-                              </div>
-                              <div>
-                                <p className="font-semibold text-foreground text-sm">
-                                  {step.title}
-                                </p>
-                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                  {step.desc}
-                                </p>
-                              </div>
-                            </motion.div>
-                          ))}
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* ─── Markets Tab ─── */}
-                  {activeHub === "markets" && (
-                    <motion.div
-                      key="markets"
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-6"
-                    >
-                      {/* Live Market Trends */}
-                      <div className="bg-white rounded-2xl border border-border p-6">
-                        <div className="flex items-center gap-2 mb-4">
-                          <h3 className="font-semibold text-foreground">
-                            Live Market Trends
-                          </h3>
-                          <Badge
-                            className="text-xs rounded-full flex items-center gap-1"
-                            style={{
-                              backgroundColor: `${MINT}22`,
-                              color: NAVY,
-                            }}
-                          >
-                            <Sparkles size={10} /> AI Powered
-                          </Badge>
-                        </div>
-                        {trendsLoading ? (
-                          <div className="space-y-3">
-                            {["sk1", "sk2", "sk3", "sk4"].map((id) => (
-                              <Skeleton
-                                key={id}
-                                className="h-10 w-full rounded-lg"
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <div
-                            className="space-y-3"
-                            data-ocid="hub.markets.list"
-                          >
-                            {trends.map((t, i) => (
-                              <div key={t.id} className="space-y-1">
-                                <motion.button
-                                  type="button"
-                                  data-ocid={`hub.markets.item.${i + 1}`}
-                                  initial={{ opacity: 0, x: -10 }}
-                                  whileInView={{ opacity: 1, x: 0 }}
-                                  viewport={{ once: true }}
-                                  transition={{ delay: i * 0.06 }}
-                                  onClick={() =>
-                                    setExpandedMarketItem(
-                                      expandedMarketItem === t.id ? null : t.id,
-                                    )
-                                  }
-                                  className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer text-left"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <div
-                                      className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
-                                      style={{
-                                        backgroundColor: `${MINT}22`,
-                                        color: NAVY,
-                                      }}
-                                    >
-                                      {(TREND_LABELS[t.id] || t.id)
-                                        .slice(0, 2)
-                                        .toUpperCase()}
-                                    </div>
-                                    <span className="text-sm font-medium text-foreground">
-                                      {TREND_LABELS[t.id] || t.id}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-4">
-                                    <MiniLineChart
-                                      data={
-                                        TREND_HISTORY[t.id] || [
-                                          t.value * 0.95,
-                                          t.value,
-                                        ]
-                                      }
-                                      width={64}
-                                      height={28}
-                                      color={
-                                        t.momentum >= 0 ? "#3CC6A6" : "#F87171"
-                                      }
-                                      label={`${TREND_LABELS[t.id] || t.id} trend`}
-                                    />
-                                    <span
-                                      className="text-xs font-semibold w-14 text-right"
-                                      style={{
-                                        color:
-                                          t.momentum >= 0
-                                            ? "oklch(0.55 0.14 165)"
-                                            : "#EF4444",
-                                      }}
-                                    >
-                                      {t.momentum >= 0 ? "+" : ""}
-                                      {t.momentum.toFixed(1)}%
-                                    </span>
-                                    {expandedMarketItem === t.id ? (
-                                      <ChevronUp
-                                        size={14}
-                                        className="text-muted-foreground"
-                                      />
-                                    ) : (
-                                      <ChevronDown
-                                        size={14}
-                                        className="text-muted-foreground"
-                                      />
-                                    )}
-                                  </div>
-                                </motion.button>
-                                <AnimatePresence>
-                                  {expandedMarketItem === t.id && (
-                                    <motion.div
-                                      initial={{ opacity: 0, height: 0 }}
-                                      animate={{ opacity: 1, height: "auto" }}
-                                      exit={{ opacity: 0, height: 0 }}
-                                      transition={{ duration: 0.2 }}
-                                      className="overflow-hidden px-2 pb-2"
-                                    >
-                                      <div
-                                        className="rounded-lg p-3 text-xs space-y-1.5"
-                                        style={{ backgroundColor: `${MINT}15` }}
-                                      >
-                                        <div className="flex justify-between">
-                                          <span className="text-muted-foreground">
-                                            Current Value
-                                          </span>
-                                          <span className="font-semibold text-foreground">
-                                            {t.value.toLocaleString("en-IN")}
-                                          </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-muted-foreground">
-                                            Day Change
-                                          </span>
-                                          <span
-                                            className="font-semibold"
-                                            style={{
-                                              color:
-                                                t.momentum >= 0
-                                                  ? "oklch(0.55 0.14 165)"
-                                                  : "#EF4444",
-                                            }}
-                                          >
-                                            {t.momentum >= 0 ? "▲" : "▼"}{" "}
-                                            {Math.abs(t.momentum).toFixed(2)}%
-                                          </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-muted-foreground">
-                                            Signal
-                                          </span>
-                                          <span
-                                            className="font-semibold"
-                                            style={{ color: NAVY }}
-                                          >
-                                            {t.momentum >= 1
-                                              ? "🚀 Strong Buy"
-                                              : t.momentum >= 0
-                                                ? "📈 Moderate Gain"
-                                                : t.momentum > -1
-                                                  ? "⚠️ Watch"
-                                                  : "📉 Declining"}
-                                          </span>
-                                        </div>
-                                        <p className="text-muted-foreground pt-1 border-t border-border">
-                                          {t.momentum >= 0
-                                            ? "This asset is showing positive momentum. Long-term investors should stay calm and hold."
-                                            : "Short-term dip. Long-term investors: this may be a good opportunity to buy more units at a lower price (SIP advantage)."}
-                                        </p>
-                                      </div>
-                                    </motion.div>
-                                  )}
-                                </AnimatePresence>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* 10-Year Market Performance */}
-                      <div className="bg-white rounded-2xl border border-border p-6">
-                        <h3 className="font-semibold text-foreground mb-1">
-                          10-Year Market Performance (India)
-                        </h3>
-                        <p className="text-xs text-muted-foreground mb-5">
-                          Historical data showing long-term growth of key Indian
-                          indices
-                        </p>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm min-w-[480px]">
-                            <thead>
-                              <tr className="border-b border-border">
-                                <th className="text-left font-semibold text-foreground py-2 pr-4">
-                                  Index
-                                </th>
-                                {[
-                                  "2015",
-                                  "2017",
-                                  "2019",
-                                  "2021",
-                                  "2023",
-                                  "2024",
-                                ].map((yr) => (
-                                  <th
-                                    key={yr}
-                                    className="text-right font-semibold text-muted-foreground py-2 px-2"
-                                  >
-                                    {yr}
-                                  </th>
-                                ))}
-                                <th
-                                  className="text-right font-semibold py-2 pl-2"
-                                  style={{ color: "oklch(0.55 0.14 165)" }}
-                                >
-                                  10Y Return
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {[
-                                {
-                                  index: "Nifty 50",
-                                  values: [
-                                    "7,900",
-                                    "10,400",
-                                    "12,100",
-                                    "17,500",
-                                    "21,800",
-                                    "24,500",
-                                  ],
-                                  ret: "+210%",
-                                },
-                                {
-                                  index: "Sensex",
-                                  values: [
-                                    "26,000",
-                                    "34,000",
-                                    "40,000",
-                                    "58,000",
-                                    "72,000",
-                                    "80,000",
-                                  ],
-                                  ret: "+208%",
-                                },
-                                {
-                                  index: "Gold (₹/10g)",
-                                  values: [
-                                    "26,000",
-                                    "29,000",
-                                    "35,000",
-                                    "48,000",
-                                    "60,000",
-                                    "72,000",
-                                  ],
-                                  ret: "+177%",
-                                },
-                              ].map((row, i) => (
-                                <motion.tr
-                                  key={row.index}
-                                  initial={{ opacity: 0, y: 8 }}
-                                  whileInView={{ opacity: 1, y: 0 }}
-                                  viewport={{ once: true }}
-                                  transition={{ delay: i * 0.08 }}
-                                  className="border-b border-border/50 hover:bg-muted/30 transition-colors"
-                                >
-                                  <td className="py-3 pr-4 font-medium text-foreground whitespace-nowrap">
-                                    {row.index}
-                                  </td>
-                                  {row.values.map((val) => (
-                                    <td
-                                      key={val}
-                                      className="py-3 px-2 text-right text-muted-foreground text-xs"
-                                    >
-                                      {val}
-                                    </td>
-                                  ))}
-                                  <td
-                                    className="py-3 pl-2 text-right font-bold text-sm"
-                                    style={{ color: "oklch(0.55 0.14 165)" }}
-                                  >
-                                    {row.ret}
-                                  </td>
-                                </motion.tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-4">
-                          * Approximate values for illustration. Past
-                          performance is not indicative of future returns.
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* ─── Tracker Tab ─── */}
-                  {activeHub === "tracker" && (
-                    <motion.div
-                      key="tracker"
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-6"
-                    >
-                      <div className="bg-white rounded-2xl border border-border p-6">
-                        <h3 className="font-bold text-foreground text-lg mb-2">
-                          What is a Market Tracker?
-                        </h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                          A market tracker monitors the live price of stocks,
-                          indices, and assets. It shows you whether a price has
-                          gone{" "}
-                          <strong className="text-foreground">
-                            UP (gain 🚀)
-                          </strong>{" "}
-                          or{" "}
-                          <strong className="text-foreground">
-                            DOWN (loss 📉)
-                          </strong>{" "}
-                          compared to its previous value.
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                          {/* Rocket / Gain Card */}
-                          <div className="rounded-xl border border-green-200 bg-green-50 overflow-hidden">
-                            <button
-                              type="button"
-                              data-ocid="tracker.gain.button"
-                              onClick={() =>
-                                setExpandedTrackerCard(
-                                  expandedTrackerCard === "gain"
-                                    ? null
-                                    : "gain",
-                                )
-                              }
-                              className="w-full p-5 text-left cursor-pointer hover:bg-green-100 transition-colors"
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-3xl">🚀</span>
-                                  <div>
-                                    <p className="font-bold text-green-800">
-                                      Rocket / Gain
-                                    </p>
-                                    <p className="text-xs text-green-600 font-medium">
-                                      Price went UP — tap for details
-                                    </p>
-                                  </div>
-                                </div>
-                                {expandedTrackerCard === "gain" ? (
-                                  <ChevronUp
-                                    size={16}
-                                    className="text-green-600"
-                                  />
-                                ) : (
-                                  <ChevronDown
-                                    size={16}
-                                    className="text-green-600"
-                                  />
-                                )}
-                              </div>
-                              <p className="text-sm text-green-700 leading-relaxed mt-2">
-                                The stock or index rose in value. Investors who
-                                hold it made a profit.
-                              </p>
-                            </button>
-                            <AnimatePresence>
-                              {expandedTrackerCard === "gain" && (
-                                <motion.div
-                                  data-ocid="tracker.gain.panel"
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: "auto" }}
-                                  exit={{ opacity: 0, height: 0 }}
-                                  transition={{ duration: 0.25 }}
-                                  className="overflow-hidden border-t border-green-200"
-                                >
-                                  <div className="p-4 space-y-3 bg-green-50">
-                                    <p className="text-sm text-green-800 font-semibold">
-                                      What does a 🚀 gain mean for you?
-                                    </p>
-                                    <ul className="space-y-2 text-sm text-green-700">
-                                      <li>
-                                        ✅ If you own the stock/fund — your
-                                        investment grew. Paper profit!
-                                      </li>
-                                      <li>
-                                        ✅ Mutual Fund NAV increases — each unit
-                                        is now worth more.
-                                      </li>
-                                      <li>
-                                        ✅ Index funds like Nifty 50 rising =
-                                        your SIP units are more valuable.
-                                      </li>
-                                      <li>
-                                        ⚠️ Don't sell in panic if prices dip
-                                        later — gains are realized only when you
-                                        sell.
-                                      </li>
-                                    </ul>
-                                    <div className="rounded-lg bg-green-100 border border-green-200 p-3 text-xs text-green-800">
-                                      💡 <strong>Beginner Tip:</strong> When the
-                                      market goes up, stay calm. Don't rush to
-                                      sell — long-term investors benefit from
-                                      letting gains compound over years.
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                          {/* Loss Card */}
-                          <div className="rounded-xl border border-red-200 bg-red-50 overflow-hidden">
-                            <button
-                              type="button"
-                              data-ocid="tracker.loss.button"
-                              onClick={() =>
-                                setExpandedTrackerCard(
-                                  expandedTrackerCard === "loss"
-                                    ? null
-                                    : "loss",
-                                )
-                              }
-                              className="w-full p-5 text-left cursor-pointer hover:bg-red-100 transition-colors"
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-3xl">📉</span>
-                                  <div>
-                                    <p className="font-bold text-red-800">
-                                      Loss
-                                    </p>
-                                    <p className="text-xs text-red-600 font-medium">
-                                      Price went DOWN — tap for details
-                                    </p>
-                                  </div>
-                                </div>
-                                {expandedTrackerCard === "loss" ? (
-                                  <ChevronUp
-                                    size={16}
-                                    className="text-red-600"
-                                  />
-                                ) : (
-                                  <ChevronDown
-                                    size={16}
-                                    className="text-red-600"
-                                  />
-                                )}
-                              </div>
-                              <p className="text-sm text-red-700 leading-relaxed mt-2">
-                                The stock or index fell in value. This is normal
-                                — markets fluctuate daily. Long-term investors
-                                stay calm.
-                              </p>
-                            </button>
-                            <AnimatePresence>
-                              {expandedTrackerCard === "loss" && (
-                                <motion.div
-                                  data-ocid="tracker.loss.panel"
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: "auto" }}
-                                  exit={{ opacity: 0, height: 0 }}
-                                  transition={{ duration: 0.25 }}
-                                  className="overflow-hidden border-t border-red-200"
-                                >
-                                  <div className="p-4 space-y-3 bg-red-50">
-                                    <p className="text-sm text-red-800 font-semibold">
-                                      What does a 📉 loss mean for you?
-                                    </p>
-                                    <ul className="space-y-2 text-sm text-red-700">
-                                      <li>
-                                        ⚠️ If you own it — your investment lost
-                                        value temporarily (unrealized loss).
-                                      </li>
-                                      <li>
-                                        ⚠️ Only a real loss if you sell now —
-                                        stay invested if your goal is long-term.
-                                      </li>
-                                      <li>
-                                        ✅ SIP investors benefit: you buy MORE
-                                        units at a lower price during dips!
-                                      </li>
-                                      <li>
-                                        ✅ Nifty 50 has always recovered
-                                        historically after every major crash.
-                                      </li>
-                                    </ul>
-                                    <div className="rounded-lg bg-red-100 border border-red-200 p-3 text-xs text-red-800">
-                                      💡 <strong>Beginner Tip:</strong> Market
-                                      dips are normal. The Nifty 50 fell 38% in
-                                      March 2020 — but recovered and hit
-                                      all-time highs by late 2020. Patience
-                                      wins.
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        </div>
-                        <div
-                          className="rounded-xl p-4 text-sm text-muted-foreground leading-relaxed"
-                          style={{ backgroundColor: `${MINT}15` }}
+                      <Sparkles size={10} /> AI Powered
+                    </Badge>
+                  </div>
+                  {trendsLoading ? (
+                    <div className="space-y-3">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: skeleton
+                        <Skeleton key={i} className="h-10 w-full rounded-lg" />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-3" data-ocid="hub.markets.list">
+                      {trends.map((t, i) => (
+                        <motion.div
+                          key={t.id}
+                          data-ocid={`hub.markets.item.${i + 1}`}
+                          initial={{ opacity: 0, x: -10 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: i * 0.06 }}
+                          className="flex items-center justify-between p-2 rounded-xl hover:bg-muted/50 transition-colors"
                         >
-                          💡{" "}
-                          <strong className="text-foreground">
-                            Day traders
-                          </strong>{" "}
-                          buy and sell daily.{" "}
-                          <strong className="text-foreground">
-                            Long-term investors
-                          </strong>{" "}
-                          hold for years. Most beginners should focus on
-                          long-term SIP investing and ignore daily market
-                          movements.
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* ─── Tips Tab ─── */}
-                  {activeHub === "tips" && (
-                    <motion.div
-                      key="tips"
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-6"
-                    >
-                      <div className="bg-white rounded-2xl border border-border p-6">
-                        <h3 className="font-bold text-foreground text-lg mb-1">
-                          Today's Investment Tips
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-5">
-                          How to use tips for future profit
-                        </p>
-                        <div
-                          className="rounded-xl p-4 text-sm text-muted-foreground leading-relaxed mb-6"
-                          style={{ backgroundColor: `${MINT}15` }}
-                        >
-                          Investment tips highlight stocks, mutual funds, or
-                          sectors showing strong signals — based on recent
-                          earnings, sector growth, or technical indicators.
-                          These are not guarantees, but informed starting
-                          points.
-                        </div>
-                        <div className="space-y-4">
-                          {[
-                            {
-                              icon: "📈",
-                              title: "Growth Picks",
-                              desc: "Sectors showing strong momentum this week — Technology, Pharma, Green Energy",
-                              color: "bg-blue-50 border-blue-200",
-                              textColor: "text-blue-800",
-                              subColor: "text-blue-600",
-                            },
-                            {
-                              icon: "💰",
-                              title: "Value Picks",
-                              desc: "Stocks trading below intrinsic value — potential long-term gain if held 3–5 years",
-                              color: "bg-amber-50 border-amber-200",
-                              textColor: "text-amber-800",
-                              subColor: "text-amber-600",
-                            },
-                            {
-                              icon: "🛡️",
-                              title: "Safe Bets",
-                              desc: "Low-risk options: Nifty 50 index funds, AAA-rated bonds, PPF top-ups",
-                              color: "bg-green-50 border-green-200",
-                              textColor: "text-green-800",
-                              subColor: "text-green-600",
-                            },
-                          ].map((tip, i) => (
-                            <motion.div
-                              key={tip.title}
-                              initial={{ opacity: 0, y: 10 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              viewport={{ once: true }}
-                              transition={{ delay: i * 0.09 }}
-                              className={`rounded-xl border overflow-hidden ${tip.color}`}
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
+                              style={{
+                                backgroundColor: `${MINT}22`,
+                                color: NAVY,
+                              }}
                             >
-                              <button
-                                type="button"
-                                data-ocid={`hub.tips.${tip.title.toLowerCase().replace(" ", "_")}.button`}
-                                onClick={() =>
-                                  setExpandedHubTip(
-                                    expandedHubTip === tip.title
-                                      ? null
-                                      : tip.title,
-                                  )
-                                }
-                                className="w-full p-4 text-left cursor-pointer hover:opacity-90 transition-opacity"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <span className="text-2xl">{tip.icon}</span>
-                                    <p
-                                      className={`font-bold text-sm ${tip.textColor}`}
-                                    >
-                                      {tip.title}
-                                    </p>
-                                  </div>
-                                  {expandedHubTip === tip.title ? (
-                                    <ChevronUp
-                                      size={16}
-                                      className={tip.subColor}
-                                    />
-                                  ) : (
-                                    <ChevronDown
-                                      size={16}
-                                      className={tip.subColor}
-                                    />
-                                  )}
-                                </div>
-                                <p
-                                  className={`text-sm leading-relaxed mt-1 ${tip.subColor}`}
-                                >
-                                  {tip.desc}
-                                </p>
-                              </button>
-                              <AnimatePresence>
-                                {expandedHubTip === tip.title && (
-                                  <motion.div
-                                    data-ocid={`hub.tips.${tip.title.toLowerCase().replace(" ", "_")}.panel`}
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: "auto" }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.25 }}
-                                    className="overflow-hidden"
-                                  >
-                                    <div
-                                      className={`px-4 pb-4 border-t ${tip.color.includes("blue") ? "border-blue-200" : tip.color.includes("amber") ? "border-amber-200" : "border-green-200"}`}
-                                    >
-                                      <div className="pt-3 space-y-2 text-sm">
-                                        {tip.title === "Growth Picks" && (
-                                          <>
-                                            <p
-                                              className={`font-semibold ${tip.textColor}`}
-                                            >
-                                              📈 Top Growth Sectors This Week:
-                                            </p>
-                                            <ul
-                                              className={`space-y-1.5 ${tip.subColor}`}
-                                            >
-                                              <li>
-                                                💻 <strong>Technology:</strong>{" "}
-                                                IT exports growing, strong Q4
-                                                results from TCS, Infosys.
-                                                Consider: Nifty IT ETF
-                                              </li>
-                                              <li>
-                                                💊 <strong>Pharma:</strong>{" "}
-                                                Generic drug exports to US
-                                                rising. Consider: Sun Pharma,
-                                                Dr. Reddy's
-                                              </li>
-                                              <li>
-                                                🌿{" "}
-                                                <strong>Green Energy:</strong>{" "}
-                                                Govt backing solar and wind.
-                                                Consider: Adani Green, Tata
-                                                Power
-                                              </li>
-                                            </ul>
-                                            <div
-                                              className={`rounded-lg p-2.5 text-xs ${tip.color.includes("blue") ? "bg-blue-100 text-blue-800" : ""}`}
-                                            >
-                                              ⏱️ Momentum investing = buy when a
-                                              sector is trending up. Best for
-                                              6–18 month horizon.
-                                            </div>
-                                          </>
-                                        )}
-                                        {tip.title === "Value Picks" && (
-                                          <>
-                                            <p
-                                              className={`font-semibold ${tip.textColor}`}
-                                            >
-                                              💰 Value Investing Explained:
-                                            </p>
-                                            <ul
-                                              className={`space-y-1.5 ${tip.subColor}`}
-                                            >
-                                              <li>
-                                                📊 Find stocks where{" "}
-                                                <strong>
-                                                  Price/Earnings (P/E)
-                                                </strong>{" "}
-                                                is below sector average
-                                              </li>
-                                              <li>
-                                                🏦 Look for strong fundamentals:
-                                                low debt, high promoter holding
-                                                (&gt;50%)
-                                              </li>
-                                              <li>
-                                                ⏳ Hold 3–5 years minimum.
-                                                Famous value investor: Warren
-                                                Buffett's Indian counterpart
-                                                approach
-                                              </li>
-                                              <li>
-                                                🔍 Example sectors: PSU Banks,
-                                                Capital Goods, select FMCG
-                                                stocks
-                                              </li>
-                                            </ul>
-                                            <div className="rounded-lg p-2.5 text-xs bg-amber-100 text-amber-800">
-                                              ⚠️ Value traps exist — a cheap
-                                              stock can stay cheap. Always check
-                                              earnings growth trend.
-                                            </div>
-                                          </>
-                                        )}
-                                        {tip.title === "Safe Bets" && (
-                                          <>
-                                            <p
-                                              className={`font-semibold ${tip.textColor}`}
-                                            >
-                                              🛡️ Low-Risk Options for Beginners:
-                                            </p>
-                                            <ul
-                                              className={`space-y-1.5 ${tip.subColor}`}
-                                            >
-                                              <li>
-                                                📊{" "}
-                                                <strong>
-                                                  Nifty 50 Index Fund:
-                                                </strong>{" "}
-                                                Auto-diversified, avg 12% pa
-                                                over 10 years
-                                              </li>
-                                              <li>
-                                                🏛️{" "}
-                                                <strong>
-                                                  AAA-rated Bonds:
-                                                </strong>{" "}
-                                                Corporate bonds rated AAA by
-                                                CRISIL — 7–8% returns
-                                              </li>
-                                              <li>
-                                                🏛️{" "}
-                                                <strong>
-                                                  PPF (Public Provident Fund):
-                                                </strong>{" "}
-                                                Govt guaranteed 7.1% tax-free,
-                                                15-year lock-in
-                                              </li>
-                                              <li>
-                                                🏦{" "}
-                                                <strong>
-                                                  FD (Fixed Deposit):
-                                                </strong>{" "}
-                                                5.5–7.5% guaranteed, DICGC
-                                                insured up to ₹5 lakh
-                                              </li>
-                                            </ul>
-                                            <div className="rounded-lg p-2.5 text-xs bg-green-100 text-green-800">
-                                              ✅ For absolute beginners: Start
-                                              with PPF + Nifty 50 SIP. Safe +
-                                              growth combo!
-                                            </div>
-                                          </>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </motion.div>
-                          ))}
+                              {(TREND_LABELS[t.id] || t.id)
+                                .slice(0, 2)
+                                .toUpperCase()}
+                            </div>
+                            <span className="text-sm font-medium text-foreground">
+                              {TREND_LABELS[t.id] || t.id}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <MiniLineChart
+                              data={
+                                TREND_HISTORY[t.id] || [t.value * 0.95, t.value]
+                              }
+                              width={64}
+                              height={28}
+                              color={t.momentum >= 0 ? "#3CC6A6" : "#F87171"}
+                              label={`${TREND_LABELS[t.id] || t.id} trend`}
+                            />
+                            <span
+                              className="text-xs font-semibold w-14 text-right"
+                              style={{
+                                color:
+                                  t.momentum >= 0
+                                    ? "oklch(0.55 0.14 165)"
+                                    : "#EF4444",
+                              }}
+                            >
+                              {t.momentum >= 0 ? "+" : ""}
+                              {t.momentum.toFixed(1)}%
+                            </span>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Portfolio donut */}
+                <div className="bg-white rounded-2xl border border-border p-6">
+                  <h3 className="font-semibold text-foreground mb-4">
+                    Example Portfolio
+                  </h3>
+                  <div className="flex items-center gap-6">
+                    <DonutChart
+                      segments={PORTFOLIO_SEGMENTS}
+                      size={130}
+                      thickness={26}
+                    />
+                    <div className="flex-1 space-y-2">
+                      {PORTFOLIO_SEGMENTS.map((seg) => (
+                        <div
+                          key={seg.label}
+                          className="flex items-center justify-between text-sm"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: seg.color }}
+                            />
+                            <span className="text-muted-foreground">
+                              {seg.label}
+                            </span>
+                          </div>
+                          <span className="font-medium text-foreground">
+                            {seg.value}%
+                          </span>
                         </div>
-                        <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-                          ⚠️{" "}
-                          <strong>
-                            Tips are for educational purposes only.
-                          </strong>{" "}
-                          Always do your own research before investing.
-                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div
+                    className="mt-4 p-3 rounded-xl text-xs text-muted-foreground"
+                    style={{ backgroundColor: `${MINT}1A` }}
+                  >
+                    💡 This is an example balanced beginner portfolio. Adjust
+                    based on your risk tolerance.
+                  </div>
+                </div>
+
+                {/* Quick stats */}
+                <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {[
+                    {
+                      label: "Avg. Annual Return",
+                      value: "10–12%",
+                      sub: "S&P 500 historical",
+                      icon: "📈",
+                    },
+                    {
+                      label: "Recommended Start",
+                      value: "₹4,200/mo",
+                      sub: "SIP (Systematic Investment Plan)",
+                      icon: "💰",
+                    },
+                    {
+                      label: "Risk Level",
+                      value: "Low–Med",
+                      sub: "Diversified portfolio",
+                      icon: "🛡️",
+                    },
+                  ].map((stat, i) => (
+                    <motion.div
+                      key={stat.label}
+                      initial={{ opacity: 0, y: 16 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.1 }}
+                      className="bg-white rounded-2xl border border-border p-4 text-center"
+                    >
+                      <div className="text-2xl mb-2">{stat.icon}</div>
+                      <div className="font-bold text-foreground text-lg">
+                        {stat.value}
+                      </div>
+                      <div className="text-xs font-medium text-foreground mb-0.5">
+                        {stat.label}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {stat.sub}
                       </div>
                     </motion.div>
-                  )}
-                </AnimatePresence>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -3276,213 +2518,6 @@ export default function App() {
           </div>
         </div>
       </footer>
-      {/* ── AI Chat Dialog (One Call AI) ── */}
-      <Dialog open={aiChatOpen} onOpenChange={setAiChatOpen}>
-        <DialogContent
-          className="max-w-md max-h-[90vh] p-0 overflow-hidden flex flex-col"
-          data-ocid="guide.ai_chat.dialog"
-        >
-          <div
-            className="p-5 border-b border-border"
-            style={{
-              background: `linear-gradient(135deg, ${NAVY}, ${NAVY_MID})`,
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white"
-                style={{ backgroundColor: MINT }}
-              >
-                <Bot size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-white text-base">One Call AI</h3>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                  <p className="text-xs text-white/70">
-                    Powered by Claude.ai · Online 24/7
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <ScrollArea className="flex-1 p-4 max-h-[50vh]">
-            <div className="space-y-3">
-              {aiChatMessages.map((msg, idx) => (
-                <div
-                  key={`msg-${idx}-${msg.role}`}
-                  className={`flex gap-2 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
-                >
-                  {msg.role === "ai" && (
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-1"
-                      style={{ backgroundColor: `${MINT}33` }}
-                    >
-                      <Bot size={14} style={{ color: NAVY }} />
-                    </div>
-                  )}
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-                      msg.role === "user"
-                        ? "text-white rounded-tr-sm"
-                        : "text-foreground rounded-tl-sm border border-border"
-                    }`}
-                    style={
-                      msg.role === "user"
-                        ? { backgroundColor: NAVY }
-                        : { backgroundColor: `${MINT}15` }
-                    }
-                  >
-                    {msg.text}
-                  </div>
-                </div>
-              ))}
-              {aiChatTyping && (
-                <div className="flex gap-2">
-                  <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${MINT}33` }}
-                  >
-                    <Bot size={14} style={{ color: NAVY }} />
-                  </div>
-                  <div
-                    className="rounded-2xl rounded-tl-sm px-4 py-3 border border-border"
-                    style={{ backgroundColor: `${MINT}15` }}
-                  >
-                    <div className="flex gap-1 items-center">
-                      <span
-                        className="w-1.5 h-1.5 rounded-full animate-bounce"
-                        style={{ backgroundColor: NAVY, animationDelay: "0ms" }}
-                      />
-                      <span
-                        className="w-1.5 h-1.5 rounded-full animate-bounce"
-                        style={{
-                          backgroundColor: NAVY,
-                          animationDelay: "150ms",
-                        }}
-                      />
-                      <span
-                        className="w-1.5 h-1.5 rounded-full animate-bounce"
-                        style={{
-                          backgroundColor: NAVY,
-                          animationDelay: "300ms",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-          <div className="p-4 border-t border-border">
-            <div className="flex flex-wrap gap-2 mb-3">
-              {[
-                "How do I start investing?",
-                "What is SIP?",
-                "Is Nifty 50 safe?",
-              ].map((q) => (
-                <button
-                  key={q}
-                  type="button"
-                  onClick={() => {
-                    const AI_RESPONSES: Record<string, string> = {
-                      "How do I start investing?":
-                        "Great question! 🎯 Start with these 3 steps:\n1. Open a Demat account on Zerodha or Groww (free, 15 min)\n2. Complete KYC with your Aadhaar + PAN\n3. Start a SIP of ₹500/month in a Nifty 50 index fund\n\nSmall start, big results over time! 💪",
-                      "What is SIP?":
-                        "SIP = Systematic Investment Plan 📊\n\nYou invest a fixed amount (e.g. ₹1,000) every month automatically. When markets are low, you buy MORE units. When high, fewer units.\n\nThis is called Rupee Cost Averaging — it reduces your average cost over time. Best strategy for beginners!",
-                      "Is Nifty 50 safe?":
-                        "Nifty 50 is India's safest equity option for beginners! 🛡️\n\n• Tracks top 50 Indian companies\n• Auto-diversified across sectors\n• Historical avg return: ~12% per year over 10 years\n• Recovered from EVERY crash so far\n\nFor long-term (5+ years), it's considered a safe bet. Not guaranteed, but historically reliable.",
-                    };
-                    const userMsg = { role: "user" as const, text: q };
-                    setAiChatMessages((prev) => [...prev, userMsg]);
-                    setAiChatTyping(true);
-                    setTimeout(() => {
-                      setAiChatTyping(false);
-                      setAiChatMessages((prev) => [
-                        ...prev,
-                        {
-                          role: "ai",
-                          text:
-                            AI_RESPONSES[q] ||
-                            "I'm here to help! Could you tell me more about what you'd like to know?",
-                        },
-                      ]);
-                    }, 1200);
-                  }}
-                  className="text-xs px-3 py-1.5 rounded-full border border-border hover:bg-muted transition-colors"
-                  style={{ color: NAVY }}
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!aiChatInput.trim()) return;
-                const userText = aiChatInput.trim();
-                setAiChatMessages((prev) => [
-                  ...prev,
-                  { role: "user", text: userText },
-                ]);
-                setAiChatInput("");
-                setAiChatTyping(true);
-                setTimeout(() => {
-                  setAiChatTyping(false);
-                  const lower = userText.toLowerCase();
-                  let reply =
-                    "Thanks for your question! 🤖 As One Call AI, I can help with investment basics. For personalized advice, please connect with our Real Advisor (9AM–6PM IST) at kumarnivith33@gmail.com.";
-                  if (lower.includes("mutual fund") || lower.includes("mf")) {
-                    reply =
-                      "Mutual Funds pool money from investors to buy stocks/bonds 📊. Types include:\n• Equity (high growth, higher risk)\n• Debt (stable, low risk)\n• Hybrid (balanced)\n• ELSS (tax saving under 80C)\n\nStart with a large-cap or Nifty 50 index fund!";
-                  } else if (lower.includes("sip")) {
-                    reply =
-                      "SIP = Systematic Investment Plan 📅\nInvest a fixed amount monthly (min ₹100). It averages out market volatility over time — called Rupee Cost Averaging. Great for beginners!";
-                  } else if (
-                    lower.includes("nifty") ||
-                    lower.includes("sensex")
-                  ) {
-                    reply =
-                      "Nifty 50 tracks India's top 50 NSE stocks 📈\nSensex tracks top 30 BSE stocks\nBoth are benchmarks for India's stock market health. When they rise, Indian economy is generally doing well.";
-                  } else if (
-                    lower.includes("fd") ||
-                    lower.includes("fixed deposit")
-                  ) {
-                    reply =
-                      "Fixed Deposits (FD) 🏦 offer:\n• Guaranteed returns: 5.5–7.5%\n• DICGC insured up to ₹5 lakh\n• No market risk\n• Best for short-term (1–3 years)\n\nFor long-term wealth, combine FD with mutual fund SIPs!";
-                  } else if (lower.includes("tax") || lower.includes("elss")) {
-                    reply =
-                      "ELSS (Equity Linked Savings Scheme) 💰 saves tax under Section 80C:\n• Invest up to ₹1.5 lakh/year to save tax\n• 3-year lock-in (shortest among tax savers)\n• Market-linked returns (avg 12–15% historically)\n• Best tax-saving + wealth-building combo!";
-                  }
-                  setAiChatMessages((prev) => [
-                    ...prev,
-                    { role: "ai", text: reply },
-                  ]);
-                }, 1400);
-              }}
-              className="flex gap-2"
-              data-ocid="guide.ai_chat.form"
-            >
-              <Input
-                value={aiChatInput}
-                onChange={(e) => setAiChatInput(e.target.value)}
-                placeholder="Ask about investing..."
-                data-ocid="guide.ai_chat.input"
-                className="flex-1 text-sm"
-              />
-              <button
-                type="submit"
-                data-ocid="guide.ai_chat.submit_button"
-                className="w-9 h-9 rounded-full flex items-center justify-center text-white transition-all hover:scale-105 active:scale-95"
-                style={{ backgroundColor: NAVY }}
-              >
-                <Send size={15} />
-              </button>
-            </form>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       <Dialog
         open={activeModal !== null}
         onOpenChange={(open) => {
