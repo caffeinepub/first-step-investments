@@ -58,33 +58,51 @@ const SEED_TRENDS: MarketTrend[] = [
 const SEED_TIPS: InvestmentTip[] = [
   {
     id: 1n,
-    title: "Start Small, Think Long",
-    body: "You don't need thousands to begin. Even $50/month invested consistently can grow significantly over time thanks to compound interest.",
+    title: "Start a SIP with ₹500/month",
+    body: "You don't need lakhs to begin. Start a SIP in a Nifty 50 index fund with as little as ₹500/month. After 10 years at 12% returns, that becomes ₹1.16 lakhs — without any extra effort.",
     category: 1n,
   },
   {
     id: 2n,
-    title: "Diversify Your Portfolio",
-    body: "Don't put all your eggs in one basket. Spread investments across stocks, ETFs, and bonds to reduce risk and smooth out volatility.",
+    title: "Use the 100 Minus Age Rule",
+    body: "A simple starting point: subtract your age from 100. If you're 25, put 75% in equity (mutual funds/stocks) and 25% in debt (FDs/PPF). Adjust as you get older and closer to your goal.",
     category: 2n,
   },
   {
     id: 3n,
-    title: "Understand Your Risk Tolerance",
-    body: "Before investing, ask yourself how much you can afford to lose. Your time horizon and goals should guide your asset allocation strategy.",
-    category: 1n,
+    title: "Max Out Your PPF Every Year",
+    body: "PPF gives 7.1% tax-free returns, guaranteed by the government. Invest the maximum ₹1.5 lakh per year — it also gives you ₹1.5L deduction under Section 80C, saving up to ₹46,800 in taxes.",
+    category: 3n,
   },
   {
     id: 4n,
-    title: "Automate Your Investments",
-    body: "Set up recurring contributions to take advantage of dollar-cost averaging — buying more shares when prices dip automatically.",
-    category: 2n,
+    title: "Buy an Emergency Fund First",
+    body: "Before investing, keep 3–6 months of expenses in a liquid fund or high-yield savings account. This prevents you from selling your investments at a loss when unexpected costs hit.",
+    category: 1n,
   },
   {
     id: 5n,
-    title: "Learn Before You Leap",
-    body: "Study the basics of P/E ratios, dividends, and market cycles before picking individual stocks. Education is your best first investment.",
+    title: "Never Time the Market — SIP Instead",
+    body: "Trying to buy at the bottom and sell at the top is nearly impossible. SIPs buy automatically — more units when prices fall, fewer when they rise. This lowers your average cost over time.",
+    category: 2n,
+  },
+  {
+    id: 6n,
+    title: "Pick ELSS Over FD for Tax Saving",
+    body: "ELSS mutual funds have a 3-year lock-in (shortest among 80C options) and historically deliver 12–15% returns vs FD's 6–7%. For long-term tax saving, ELSS is the smarter choice.",
+    category: 2n,
+  },
+  {
+    id: 7n,
+    title: "Reinvest Your Dividends",
+    body: "Choose the 'Growth' option over 'Dividend' in mutual funds. Dividends are taxed when paid out, but growth compounds silently. Over 20 years, the difference can be 30–40% more wealth.",
     category: 1n,
+  },
+  {
+    id: 8n,
+    title: "Review Your Portfolio Every 6 Months",
+    body: "Rebalance if any asset class drifts more than 10% from your target. If equity grew to 85% when you wanted 70%, sell some and shift to debt — this is called disciplined rebalancing.",
+    category: 2n,
   },
 ];
 

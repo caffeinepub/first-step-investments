@@ -74,7 +74,17 @@ const HUB_SECTIONS = [
   { id: "tips", label: "Tips", icon: Lightbulb },
 ];
 
-const TIP_ICONS = ["💡", "📊", "🎯", "⚡", "🔑"];
+const TIP_ICONS = ["💡", "📊", "🎯", "⚡", "🔑", "📈", "♻️", "🔄"];
+const TIP_TAGS = [
+  { label: "SIP Strategy", color: "oklch(0.92 0.06 232)" },
+  { label: "Asset Allocation", color: "oklch(0.92 0.08 160)" },
+  { label: "Tax Saving", color: "oklch(0.94 0.07 80)" },
+  { label: "Risk Management", color: "oklch(0.92 0.06 30)" },
+  { label: "Market Basics", color: "oklch(0.92 0.06 232)" },
+  { label: "Tax Saving", color: "oklch(0.94 0.07 80)" },
+  { label: "Compounding", color: "oklch(0.92 0.08 160)" },
+  { label: "Portfolio Health", color: "oklch(0.92 0.06 30)" },
+];
 
 const ROADMAP_STEPS = [
   {
@@ -333,9 +343,14 @@ function SIPCalculator() {
 // ─── Modal Content ─────────────────────────────────────────────────────────
 
 const TIP_EXTENDED = [
-  "Start by reviewing your monthly income and fixed expenses. Calculate your savings rate — even 10% of income invested consistently over 10+ years can grow significantly due to compound interest. Use budgeting apps or spreadsheets to track every rupee.",
-  "Diversification means spreading investments across asset classes: equity (stocks/mutual funds), debt (FDs/bonds), gold, and real estate. A simple rule: subtract your age from 100 — that percentage can go into equity, the rest in safer assets.",
-  "Set up a SIP on the 1st of every month aligned with your salary date. Automation removes emotional decision-making. Even ₹500/month in an index fund for 20 years at 12% returns could grow to over ₹4.5 lakhs.",
+  "Action step: Open a demat account today (Zerodha/Groww), search for 'Nifty 50 index fund', and set a SIP date matching your salary credit date. Set it and forget it — consistency beats perfect timing every time.",
+  "Action step: Write down your age, then calculate 100 minus your age for equity %. Open a flexi-cap or large-cap fund for the equity portion and PPF/FD for the rest. Review the split every year on your birthday.",
+  "Action step: Log in to your PPF account (or open one at SBI/Post Office) and transfer ₹12,500/month (₹1.5L/year) for the full 80C benefit. Set a monthly auto-transfer so you never miss it.",
+  "Action step: Calculate your monthly expenses. Multiply by 6. Transfer that amount to a liquid mutual fund like HDFC Liquid Fund or Parag Parikh Liquid Fund — it earns better than savings accounts and stays accessible.",
+  "Action step: Open a SIP in DSP Nifty 50 Equal Weight Index Fund or UTI Nifty 50 Index Fund. Start with ₹1,000/month. Increase it by 10% every year (called a step-up SIP) as your salary grows.",
+  "Action step: Compare ELSS options — Mirae Asset Tax Saver, Axis Long Term Equity, or Quant Tax Plan. Start a ₹500/month SIP to lock in your 80C deduction and let it compound beyond the 3-year lock-in.",
+  "Action step: When choosing mutual funds, always pick 'Growth' plan over 'IDCW' (dividend). Check your existing funds in CAMS or MFCentral — switch to Growth if you are currently in dividend option.",
+  "Action step: Set a calendar reminder for April 1 and October 1 every year. Log in, check if any asset class is ±10% off target, and rebalance by buying the underweight category using fresh SIP contributions.",
 ];
 
 const MODAL_TITLES: Record<string, string> = {
@@ -2820,11 +2835,11 @@ export default function App() {
             </motion.div>
 
             <div
-              className="grid grid-cols-1 md:grid-cols-3 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
               data-ocid="tips.list"
             >
               {tipsLoading
-                ? ["t1", "t2", "t3"].map((id) => (
+                ? ["t1", "t2", "t3", "t4", "t5", "t6"].map((id) => (
                     <div
                       key={id}
                       className="rounded-2xl border border-border p-6 space-y-3"
@@ -2834,7 +2849,7 @@ export default function App() {
                       <Skeleton className="h-16 w-full" />
                     </div>
                   ))
-                : tips.slice(0, 3).map((tip, i) => (
+                : tips.slice(0, 6).map((tip, i) => (
                     <motion.div
                       key={tip.id.toString()}
                       data-ocid={`tips.item.${i + 1}`}
@@ -2855,11 +2870,23 @@ export default function App() {
                         )
                       }
                     >
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-4"
-                        style={{ backgroundColor: `${MINT}22` }}
-                      >
-                        {TIP_ICONS[i % TIP_ICONS.length]}
+                      <div className="flex items-start justify-between mb-3">
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0"
+                          style={{ backgroundColor: `${MINT}22` }}
+                        >
+                          {TIP_ICONS[i % TIP_ICONS.length]}
+                        </div>
+                        <span
+                          className="text-xs font-semibold px-2 py-1 rounded-full"
+                          style={{
+                            backgroundColor:
+                              TIP_TAGS[i % TIP_TAGS.length].color,
+                            color: NAVY,
+                          }}
+                        >
+                          {TIP_TAGS[i % TIP_TAGS.length].label}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 mb-1">
                         <Star size={12} style={{ color: MINT }} fill={MINT} />
@@ -2876,6 +2903,16 @@ export default function App() {
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {tip.body}
                       </p>
+                      <div
+                        className="mt-3 flex items-center gap-1 text-xs font-medium"
+                        style={{ color: "oklch(0.45 0.12 232)" }}
+                      >
+                        <span>
+                          {expandedTip === tip.id.toString()
+                            ? "Hide action step ▲"
+                            : "See action step ▼"}
+                        </span>
+                      </div>
                       <AnimatePresence>
                         {expandedTip === tip.id.toString() && (
                           <motion.div
@@ -2883,14 +2920,23 @@ export default function App() {
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.25 }}
-                            className="overflow-hidden mt-3 pt-3 border-t border-border"
+                            className="overflow-hidden mt-2 pt-3 border-t border-border"
                           >
-                            <p
-                              className="text-sm leading-relaxed"
-                              style={{ color: NAVY }}
+                            <div
+                              className="rounded-xl p-3 text-sm leading-relaxed"
+                              style={{
+                                backgroundColor: `${MINT}15`,
+                                color: NAVY,
+                              }}
                             >
-                              {TIP_EXTENDED[i % TIP_EXTENDED.length]}
-                            </p>
+                              <p
+                                className="font-semibold text-xs uppercase tracking-wide mb-1.5"
+                                style={{ color: MINT }}
+                              >
+                                ✅ Action Step
+                              </p>
+                              <p>{TIP_EXTENDED[i % TIP_EXTENDED.length]}</p>
+                            </div>
                           </motion.div>
                         )}
                       </AnimatePresence>
